@@ -1,0 +1,59 @@
+{
+    "appenders": {  
+      "lastmention": {
+        "type": "file",
+        "filename": "log/_last_mention_id.txt",
+        "maxLogSize": 1024,
+        "numBackups": 2
+      },
+      "lastdm": {
+        "type": "file",
+        "filename": "log/_last_dm_id.txt",
+        "maxLogSize": 1024,
+        "numBackups": 2
+      },
+      "stdout": {
+        "type": "stdout"
+      },
+      "stderr": {
+        "type": "stderr"
+      },
+      "out": { 
+        "type": "console" 
+      },
+      "app": {
+        "type": "file",
+        "filename": "log/app.log",
+        "maxLogSize": 1048576,
+        "numBackups": 2
+      },
+      "err": {
+        "type": "file",
+        "filename": "log/err.log",
+        "maxLogSize": 1048576,
+        "numBackups": 2
+      },
+      "test": {
+        "type": "file",
+        "filename": "log/test.log",
+        "maxLogSize": 1048576,
+        "numBackups": 2
+      },
+      "errors": {
+        "type": "logLevelFilter",
+        "level": "ERROR",
+        "appender": "err"
+      },
+      "info": {
+        "type": "logLevelFilter",
+        "level": "INFO",
+        "appender": "stdout"
+      }
+    },
+    "categories": {
+      "default": { "appenders": [ "app", "out" ], "level": "INFO" },
+      "_lastmention": { "appenders": [ "lastmention", "stdout" ], "level": "INFO" },
+      "_lastdm": { "appenders": [ "lastdm", "stdout"    ], "level": "INFO" },
+      "_test": { "appenders": [ "test", "stdout"    ], "level": "INFO" }
+    }
+}
