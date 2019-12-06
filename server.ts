@@ -13,6 +13,7 @@ import {getLogger} from 'glenbikes-typescript-test';
 import {IRegion} from 'glenbikes-typescript-test';
 import {ICitation} from 'glenbikes-typescript-test';
 import {LogType} from 'glenbikes-typescript-test';
+import {CompareNumericStrings} from 'glenbikes-typescript-test';
 
 // howsmydriving-seattle
 // TODO: Put the configuration of regions in .env
@@ -24,7 +25,7 @@ import {IReportItemRecord} from './src/interfaces';
 import {ICitationRecord} from './src/interfaces';
 import {CitationRecord} from './src/interfaces';
 import {StatesAndProvinces, formatPlate} from './src/interfaces';
-import {GetHowsMyDrivingId, CompareNumericStrings, DumpObject} from './src/interfaces';
+import {GetHowsMyDrivingId, DumpObject} from './src/interfaces';
 
 // legacy commonjs modules
 const chokidar = require('chokidar'),
@@ -505,8 +506,8 @@ app.all("/processcitations", (request: Request, response: Response) => {
       let request_promises: Array<Promise<void>> = [];
       
       if (citations && citations.length > 0) {
-        let citationsByRequest: { [request_id: string] : Array<ICitationRecord>; } = {};
-        let citationsByPlate: { [plate: string] : number; } = {};
+        let citationsByRequest: { [request_id: string] : Array<ICitationRecord> } = {};
+        let citationsByPlate: { [plate: string] : number } = {};
 
         log.info(`Processing ${citations.length} citation records...`);
 
