@@ -1,4 +1,4 @@
-// TODO: Comment on this github or npmjs project for this.
+// TODO: Delete this file once an end-to-end test with dynamo-batchwrite-queue works.
 'use strict'
 
 const async = require('async')

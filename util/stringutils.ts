@@ -1,11 +1,19 @@
 // modules
-const uuidv1 = require("uuid/v1");
 import '../src/string-ext';
 
-// Wrap this so we can stub it.
-export function getUUID(): string {
+import * as uuid from 'uuid';
+const uuidv1 = uuid.v1;
+
+/**
+ * Wrap this just so we can stub it in tests.
+ *
+ * Returns:
+ *  String GUID of form uuid/v1 (see uuid npm package)
+**/
+export function GetHowsMyDrivingId(): string {
   return uuidv1();
 }
+
 /*
  * Split array of strings to ensure each string is <= maxLen
  *
@@ -20,7 +28,7 @@ export function getUUID(): string {
  *   - if neither above exist, then just split at maxLen characters
  *
  * Note: elements in source_lines are not joined if < maxLen, only broken
- *       up if > maxLen
+ *       up if > maxLen. The # of returned strings will be >= source_lines.length
 **/
 export function SplitLongLines(source_lines: Array<string>, maxLen: number): Array<string> {
   var truncated_lines: Array<string> = [];
@@ -93,16 +101,17 @@ export function SplitLongLines(source_lines: Array<string>, maxLen: number): Arr
 }
 
 /**
- * When investigating a selenium test failure on a remote headless browser that couldn't be reproduced
- * locally, I wanted to add some javascript to the site under test that would dump some state to the
- * page (so it could be captured by Selenium as a screenshot when the test failed). JSON.stringify()
- * didn't work because the object declared a toJSON() method, and JSON.stringify() just calls that
- * method if it's present. This was a Moment object, so toJSON() returned a string but I wanted to see
- * the internal state of the object instead.
+ * Recursively dumps any javascript object.
  *
- * So, this is a rough and ready function that recursively dumps any old javascript object.
+ * Params:
+ *   o:      Object to dump
+ *   Indent: # characters to indent. This allows creating an intented 
+ *           tree structure of an obect.
+ *
+ * Returns:
+ *   String representing a dump of o and all it's values.
  */
-export function printObject(o: any, indent: number): string {
+export function DumpObject(o: any, indent: number = 0): string {
   var out: string = "";
   if (typeof indent === "undefined") {
     indent = 0;
@@ -117,7 +126,7 @@ export function printObject(o: any, indent: number): string {
         } else {
           out +=
             "{\n" +
-            printObject(val, indent + 1) +
+            DumpObject(val, indent + 1) +
             new Array(4 * indent + 1).join(" ") +
             "}";
         }
@@ -131,7 +140,20 @@ export function printObject(o: any, indent: number): string {
   return out;
 }
 
-export function compare_numeric_strings(a: string, b: string): number {
+/**
+ * Compares two strings that represent numbers. Comparing as strings
+ * will return inconsistent results if the numbers have different number
+ * of digits.
+ *
+ * Params:
+ *   a: fist string
+ *   b: second string
+ * Returns:
+ *   0 -   a and b are numberically equal (may not be string equal though)
+ *   < 0 - a < b (a is numerically less than b)
+ *   > 0 - a > b (a is numerically greater than b)
+**/
+export function CompareNumericStrings(a: string, b: string): number {
   if (a.length > b.length) {
     b = b.lpad('0', a.length);
   }

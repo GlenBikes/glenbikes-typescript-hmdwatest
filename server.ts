@@ -1,66 +1,42 @@
-//require("babel-core").transform("code", options);
-//require('import-to-commonjs/dist/register');
-
-//import * as test from 'glenbikes-typescript-test';
-const test = require('glenbikes-typescript-test');
-//const test = require('bikes-typescript-test');
-//import {LogType} from 'glenbikes-typescript-test';
-var LogType = test.LogType;
-const getLogger = test.getLogger;
-
-// Exported functions for tests
-module.exports = {
-  /*
-  _chompTweet: chompTweet,
-  _splitLines: SplitLongLines,
-  _getQueryCount: GetQueryCount,
-  _processNewTweets: processNewTweets,
-  _processNewDMs: processNewDMs
-  */
-};
-
 /* Setting things up. */
+import * as AWS from 'aws-sdk';
+import {DocumentClient, QueryOutput} from 'aws-sdk/clients/dynamodb';
 import {Request, Response} from 'express';
-
 import * as http from 'http';
+import {LMXClient, LMXBroker, Client, Broker} from 'live-mutex';
+import * as Twit from 'twit';
 
-import {SeattleRegion} from 'glenbikes-typescript-seattle';
+// howsmydriving-utils
+import {Citation} from 'glenbikes-typescript-test';
+import {CitationIds} from 'glenbikes-typescript-test';
+import {getLogger} from 'glenbikes-typescript-test';
 import {IRegion} from 'glenbikes-typescript-test';
 import {ICitation} from 'glenbikes-typescript-test';
-import {CitationIds} from 'glenbikes-typescript-test';
+import {LogType} from 'glenbikes-typescript-test';
 
+// howsmydriving-seattle
+// TODO: Put the configuration of regions in .env
+import {SeattleRegion} from 'glenbikes-typescript-seattle';
+
+// interfaces internal to project
 import {IRequestRecord} from './src/interfaces';
 import {IReportItemRecord} from './src/interfaces';
 import {ICitationRecord} from './src/interfaces';
 import {CitationRecord} from './src/interfaces';
+import {StatesAndProvinces, formatPlate} from './src/interfaces';
+import {GetHowsMyDrivingId, CompareNumericStrings, DumpObject} from './src/interfaces';
 
-import {LMXClient, LMXBroker, Client, Broker /*, LMUnlockSuccessData, LMXClientUnlockOpts */} from 'live-mutex';
-
-import * as Twit from 'twit';
-
-import * as AWS from 'aws-sdk';
-import {DocumentClient, QueryOutput} from 'aws-sdk/clients/dynamodb';
-
-const //AWS = require("aws-sdk"),
-  //howsmydriving_seattle = require("howsmydriving-seattle"),
-  //howsmydriving_utils = require("howsmydriving-utils"),
-  chokidar = require('chokidar'),
+// legacy commonjs modules
+const chokidar = require('chokidar'),
   express = require("express"),
   fs = require("fs"),
-  license = require("./util/licensehelper"),
   LocalStorage = require('node-localstorage').LocalStorage,
-  //logging = require("./util/logging"),
   path = require("path"),
   Q = require('dynamo-batchwrite-queue'),
   //Q = require('./util/batch-write-queue.js'),
-  //seattle = require('./opendata/seattle.js'),
-  soap = require("soap"),
-  strUtils = require('./util/stringutils.js'),
-  uuidv1 = require("uuid/v1");
+  soap = require("soap");
 
 let seattle: SeattleRegion = new SeattleRegion();
-
-//console.log(`hmdUtils:\n${strUtils._printObject(hmdUtils)}\nEND.`);
 
 const app = express(),
   config: any = {
@@ -80,16 +56,20 @@ const MUTEX_TWIT_POST_MAX_HOLD_MS: number = 100000,
       MUTEX_TWIT_POST_MAX_RETRIES: number = 5,
       MUTEX_TWIT_POST_MAX_WAIT_MS: number = 300000;
 
+// Don't think we need to override this. The only EventEmitters we
+// use are for mocha test execution, fs file watching.
 process.setMaxListeners(15);
     
 
-const MAX_RECORDS_BATCH = 2000, 
+const
+  MAX_RECORDS_BATCH = 2000, 
   INTER_TWEET_DELAY_MS =
     process.env.hasOwnProperty("INTER_TWEET_DELAY_MS") &&
-    strUtils.compare_numeric_strings(process.env.INTER_TWEET_DELAY_MS, "0") < 0
+    CompareNumericStrings(process.env.INTER_TWEET_DELAY_MS, "0") < 0
       ? parseInt(process.env.INTER_TWEET_DELAY_MS, 10)
-      : 5000,
-  tableNames = {
+      : 5000;
+
+export const tableNames: { [tabletype: string] : string; } = {
     Request: `${process.env.DB_PREFIX}_Request`,
     Citations: `${process.env.DB_PREFIX}_Citations`,
     ReportItems: `${process.env.DB_PREFIX}_ReportItems`
@@ -128,7 +108,6 @@ var listener = app.listen(process.env.PORT, function() {
 /* tracks the largest tweet ID retweeted - they are not processed in order, due to parallelization  */
 /* uptimerobot.com is hitting this URL every 5 minutes. */
 app.all("/tweet", function(request: Request, response: Response) {
-  var citation_interface = test.Citation;
   
   debugger;
   const T: Twit = new Twit(config.twitter);
@@ -333,7 +312,7 @@ app.all("/processrequests", (request: Request, response: Response) => {
                 // TTL is 10 years from now until the records are PROCESSED
                 var ttl_expire = new Date(now).setFullYear(new Date(now).getFullYear() + 10);
                 var citation = {
-                  id: strUtils._getUUID(),
+                  id: GetHowsMyDrivingId(),
                   Citation: CitationIds.CitationIDNoPlateFound,
                   processing_status: "UNPROCESSED",
                   license: item.license,
@@ -395,7 +374,7 @@ app.all("/processrequests", (request: Request, response: Response) => {
                     var ttl_expire = new Date(now).setFullYear(new Date(now).getFullYear() + 10);
 
                     var citation: ICitationRecord = {
-                      id: strUtils._getUUID(),
+                      id: GetHowsMyDrivingId(),
                       Citation: CitationIds.CitationIDNoCitationsFound,
                       request_id: item.id,
                       processing_status: "UNPROCESSED",
@@ -425,7 +404,7 @@ app.all("/processrequests", (request: Request, response: Response) => {
                       
                       let citation_record:CitationRecord = new CitationRecord(citation);
                       
-                      citation_record.id = strUtils._getUUID();
+                      citation_record.id = GetHowsMyDrivingId();
                       citation_record.request_id = item.id;
                       citation_record.processing_status = "UNPROCESSED";
                       citation_record.license = item.license;
@@ -844,7 +823,7 @@ function processNewTweets(T: Twit, docClient: AWS.DynamoDB.DocumentClient, bot_a
 
             log.debug(`Found ${printTweet(status)}`);
 
-            if (strUtils._compare_numeric_strings(maxTweetIdRead, status.id_str) < 0) {
+            if (CompareNumericStrings(maxTweetIdRead, status.id_str) < 0) {
               maxTweetIdRead = status.id_str;
             }
 
@@ -866,7 +845,7 @@ function processNewTweets(T: Twit, docClient: AWS.DynamoDB.DocumentClient, bot_a
                 var item = {
                   PutRequest: {
                     Item: {
-                      id: strUtils._getUUID(),
+                      id: GetHowsMyDrivingId(),
                       license: `${state}:${plate}`, // TODO: Create a function for this plate formatting.
                       created: now,
                       modified: now,
@@ -913,7 +892,7 @@ function processNewTweets(T: Twit, docClient: AWS.DynamoDB.DocumentClient, bot_a
           
             // Update the ids of the last tweet/dm if we processed
             // anything with larger ids.
-            if (strUtils._compare_numeric_strings(maxTweetIdRead, last_mention_id) > 0) {
+            if (CompareNumericStrings(maxTweetIdRead, last_mention_id) > 0) {
               setLastMentionId(maxTweetIdRead);
             }
 
@@ -1074,7 +1053,7 @@ function parseTweet(text: string) {
     state = matches[1];
     plate = matches[2];
 
-    if (license.StatesAndProvinces.indexOf(state.toUpperCase()) < 0) {
+    if (StatesAndProvinces.indexOf(state.toUpperCase()) < 0) {
       handleError(new Error(`Invalid state: ${state}`));
     }
   }
@@ -1086,7 +1065,7 @@ function parseTweet(text: string) {
 }
 
 function mungeObject(o: any, propertyOverrides: { [ key: string ]: any }): void {
-  console.log(`munging object: ${strUtils._printObject(o)}.`);
+  console.log(`munging object: ${DumpObject(o)}.`);
   for (var p in o) {
     console.log(`Checking for property [${p}].`);
     if (o.hasOwnProperty(p)) {
@@ -1160,13 +1139,13 @@ function SendResponses(mutex_client: Client, T: Twit, origTweet: Twit.Twitter.St
     // succession or Twitter will tag them as spam and they won't
     // render i the thread of resposes.
     // So wait at least INTER_TWEET_DELAY_MS ms between posts.
-    let mutex_id = strUtils._getUUID();
+    let mutex_id = GetHowsMyDrivingId();
     
     log.debug(`Acquiring mutex ${mutex_id}...`);
     var mutex_promise;
     
     if (mutex_client) {
-      mutex_promise = mutex_client.acquire(strUtils._getUUID(), {
+      mutex_promise = mutex_client.acquire(GetHowsMyDrivingId(), {
         ttl: MUTEX_TWIT_POST_MAX_HOLD_MS, 
         maxRetries: MUTEX_TWIT_POST_MAX_RETRIES, 
         lockRequestTimeout: MUTEX_TWIT_POST_MAX_WAIT_MS
@@ -1620,7 +1599,7 @@ function WriteReportItemRecords(docClient: AWS.DynamoDB.DocumentClient, request_
     var item = {
       PutRequest: {
         Item: {
-          id: strUtils._getUUID(),
+          id: GetHowsMyDrivingId(),
           request_id: request_id,
           record_num: record_num++,
           created: now,

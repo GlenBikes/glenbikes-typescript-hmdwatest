@@ -1,6 +1,9 @@
 import {ICitation} from 'glenbikes-typescript-test';
 import {Citation} from 'glenbikes-typescript-test';
 
+export {StatesAndProvinces, formatPlate} from '../util/licensehelper';
+export {GetHowsMyDrivingId, CompareNumericStrings, DumpObject} from '../util/stringutils';
+
 export interface IRequestRecord {
   id: string;
   license: string;

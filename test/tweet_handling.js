@@ -1,3 +1,5 @@
+import {tableNames} from '../server';
+
 var assert = require('assert'),
     server = require('../server'),
     sinon = require('sinon'),

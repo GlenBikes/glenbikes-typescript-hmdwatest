@@ -1,3 +1,7 @@
+/**
+ * Array of all valid 2 character abbreviations for US states/occupied territories and 
+ * Canadian provinces/territories
+**/
 export let StatesAndProvinces: Array<string> = [
   "AL",
   "AK",
