@@ -1,4 +1,5 @@
 import {ICitation} from 'glenbikes-typescript-test';
+import {Citation} from 'glenbikes-typescript-test';
 
 export interface IRequestRecord {
   id: string;
@@ -40,7 +41,8 @@ export interface ICitationRecord extends ICitation {
 }
 
 export class CitationRecord implements ICitationRecord {
-  constructor(citation: ICitation) {
+  [name: string]: number | string;
+  constructor(citation: Citation) {
     // If passed an existing instance, copy over the properties.
     if(arguments.length > 0) {
       for (var p in citation) {
@@ -52,8 +54,8 @@ export class CitationRecord implements ICitationRecord {
   }
   
   id: string;
-  Citation: number,
   license: string;
+  Citation: number;
   request_id: string;
   processing_status: string;
   created: number;

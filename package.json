@@ -2,10 +2,10 @@
   "name": "HowsMyDrivingWA",
   "version": "0.0.1",
   "description": "Tweet a license # at me! I'll look it up for you.",
-  "main": "./server.js",
+  "main": "./dist/server.js",
   "scripts": {
     "build": "gulp build",
-    "start": "gulp build && node dist/index.js",
+    "start": "gulp build && node dist/server.js",
     "test": "gulp test",
     "release": "standard-version"
   },
@@ -26,8 +26,8 @@
     "chokidar": "^3.3.0",
     "dynamo-batchwrite-queue": "^1.0.1",
     "express": "^4.14.0",
-    "glenbikes-typescript-seattle": "^0.1.23",
-    "glenbikes-typescript-test": "^0.1.34",
+    "glenbikes-typescript-seattle": "^0.1.26",
+    "glenbikes-typescript-test": "^0.1.42",
     "gulp": "^3.9.1",
     "gulp-clean": "^0.4.0",
     "gulp-cli": "^2.2.0",

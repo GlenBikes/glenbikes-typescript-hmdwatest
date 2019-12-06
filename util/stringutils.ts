@@ -1,17 +1,9 @@
-// Exported functions that unit tests need.
-module.exports = {
-  _splitLines: SplitLongLines,
-  _printObject: printObject,
-  _getUUID: getUUID,
-  _compare_numeric_strings: compare_numeric_strings
-};
-
 // modules
 const uuidv1 = require("uuid/v1");
-
+import '../src/string-ext';
 
 // Wrap this so we can stub it.
-function getUUID() {
+export function getUUID(): string {
   return uuidv1();
 }
 /*
@@ -30,18 +22,18 @@ function getUUID() {
  * Note: elements in source_lines are not joined if < maxLen, only broken
  *       up if > maxLen
 **/
-function SplitLongLines(source_lines, maxLen) {
-  var truncated_lines = [];
+export function SplitLongLines(source_lines: Array<string>, maxLen: number): Array<string> {
+  var truncated_lines: Array<string> = [];
   
-  var index = 0;
+  var index: number = 0;
   source_lines.forEach(source_line => {
     if (source_line.length > maxLen) {
       // break it up into lines to start with
-      var chopped_lines = source_line.split("\n");
-      var current_line = "";
-      var first_line = true;
+      var chopped_lines: Array<string> = source_line.split("\n");
+      var current_line: string = "";
+      var first_line: boolean = true;
 
-      chopped_lines.forEach(line => {
+      chopped_lines.forEach( (line: string) => {
         if (line.length > maxLen) {
           // OK we have a single line that is too long for a tweet
           if (current_line.length > 0) {
@@ -51,7 +43,7 @@ function SplitLongLines(source_lines, maxLen) {
           }
           
           // word break it into multiple items
-          var truncate_index = maxLen - 1;
+          var truncate_index: number = maxLen - 1;
 
           // Go back until we hit a whitespace characater
           while (truncate_index > 0 && !/\s/.test(line[truncate_index])) {
@@ -67,7 +59,7 @@ function SplitLongLines(source_lines, maxLen) {
 
           // The rest of the string may still be too long.
           // Call ourselves recursively to split it up.
-          var rest_truncated_lines = SplitLongLines(
+          var rest_truncated_lines: Array<string> = SplitLongLines(
             [line.substring(truncate_index + 1)],
             maxLen
           );
@@ -110,14 +102,14 @@ function SplitLongLines(source_lines, maxLen) {
  *
  * So, this is a rough and ready function that recursively dumps any old javascript object.
  */
-function printObject(o, indent) {
-  var out = "";
+export function printObject(o: any, indent: number): string {
+  var out: string = "";
   if (typeof indent === "undefined") {
     indent = 0;
   }
   for (var p in o) {
     if (o.hasOwnProperty(p)) {
-      var val = o[p];
+      var val: any = o[p];
       out += new Array(4 * indent + 1).join(" ") + p + ": ";
       if (typeof val === "object") {
         if (val instanceof Date) {
@@ -139,14 +131,7 @@ function printObject(o, indent) {
   return out;
 }
 
-String.prototype.lpad = function(padString, length) {
-    var str = this;
-    while (str.length < length)
-        str = padString + str;
-    return str;
-}
-
-function compare_numeric_strings(a, b) {
+export function compare_numeric_strings(a: string, b: string): number {
   if (a.length > b.length) {
     b = b.lpad('0', a.length);
   }

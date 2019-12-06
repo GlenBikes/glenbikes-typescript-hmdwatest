@@ -34,11 +34,12 @@ import {IReportItemRecord} from './src/interfaces';
 import {ICitationRecord} from './src/interfaces';
 import {CitationRecord} from './src/interfaces';
 
-import {LMXClient, LMXBroker, Client, Broker, LMUnlockSuccessData, LMXClientUnlockOpts} from 'live-mutex';
+import {LMXClient, LMXBroker, Client, Broker /*, LMUnlockSuccessData, LMXClientUnlockOpts */} from 'live-mutex';
 
 import * as Twit from 'twit';
 
 import * as AWS from 'aws-sdk';
+import {DocumentClient, QueryOutput} from 'aws-sdk/clients/dynamodb';
 
 const //AWS = require("aws-sdk"),
   //howsmydriving_seattle = require("howsmydriving-seattle"),
@@ -61,8 +62,8 @@ let seattle: SeattleRegion = new SeattleRegion();
 
 //console.log(`hmdUtils:\n${strUtils._printObject(hmdUtils)}\nEND.`);
 
-var app = express(),
-  config = {
+const app = express(),
+  config: any = {
     twitter: {
       consumer_key: process.env.CONSUMER_KEY,
       consumer_secret: process.env.CONSUMER_SECRET,
@@ -75,9 +76,9 @@ var app = express(),
 var localStorage = new LocalStorage('./.localstore');
 
 // Mutex to ensure we don't post tweets in quick succession
-const MUTEX_TWIT_POST_MAX_HOLD_MS = 100000,
-      MUTEX_TWIT_POST_MAX_RETRIES = 5,
-      MUTEX_TWIT_POST_MAX_WAIT_MS = 300000;
+const MUTEX_TWIT_POST_MAX_HOLD_MS: number = 100000,
+      MUTEX_TWIT_POST_MAX_RETRIES: number = 5,
+      MUTEX_TWIT_POST_MAX_WAIT_MS: number = 300000;
 
 process.setMaxListeners(15);
     
@@ -96,7 +97,7 @@ const MAX_RECORDS_BATCH = 2000,
 
 module.exports._tableNames = tableNames;
 
-var log = getLogger(LogType.app),
+const log = getLogger(LogType.app),
     lastdmLog = getLogger(LogType.last_dm),
     lastmentionLog = getLogger(LogType.last_mention);
 
@@ -104,16 +105,16 @@ log.info(`${process.env.TWITTER_HANDLE}: start`);
 
 AWS.config.update({ region: "us-east-2" });
 
-var maxTweetLength = 280 - 17; // Max username is 15 chars + '@' plus the space after the full username
-var noCitations = "No citations found for plate # ";
-var parkingAndCameraViolationsText =
+const maxTweetLength: number = 280 - 17; // Max username is 15 chars + '@' plus the space after the full username
+const noCitations: string = "No citations found for plate # ";
+const parkingAndCameraViolationsText: string =
   "Total parking and camera violations for #";
-var violationsByYearText = "Violations by year for #";
-var violationsByStatusText = "Violations by status for #";
-var licenseQueriedCountText =
+const violationsByYearText: string = "Violations by year for #";
+const violationsByStatusText: string = "Violations by status for #";
+const licenseQueriedCountText: string =
   "License __LICENSE__ has been queried __COUNT__ times.";
-var licenseRegExp = /\b([a-zA-Z]{2}):([a-zA-Z0-9]+)\b/;
-var botScreenNameRegexp = new RegExp(
+const licenseRegExp: RegExp = /\b([a-zA-Z]{2}):([a-zA-Z0-9]+)\b/;
+const botScreenNameRegexp: RegExp = new RegExp(
   "@" + process.env.TWITTER_HANDLE + "\\b",
   "i"
 );
@@ -422,7 +423,7 @@ app.all("/processrequests", (request: Request, response: Response) => {
                       // TTL is 10 years from now until the records are PROCESSED
                       var ttl_expire = new Date(now).setFullYear(new Date(now).getFullYear() + 10);
                       
-                      let citation_record = new CitationRecord(citation);
+                      let citation_record:CitationRecord = new CitationRecord(citation);
                       
                       citation_record.id = strUtils._getUUID();
                       citation_record.request_id = item.id;
@@ -558,7 +559,7 @@ app.all("/processcitations", (request: Request, response: Response) => {
             requestsforplate_promises[citation.license].then( (query_count ) => {
               seattle
                 .ProcessCitationsForRequest(citationsByRequest[request_id], query_count)
-                .then( (report_items) => {
+                .then( (report_items: Array<string>) => {
                   // Write report items
                   WriteReportItemRecords(docClient, request_id, citation, report_items)
                     .then( () => {
@@ -599,7 +600,7 @@ app.all("/processcitations", (request: Request, response: Response) => {
                       handleError(e);
                     });
                 })
-                .catch(e => {
+                .catch( (e: Error) => {
                   handleError(e);
                 });
               });
@@ -1222,7 +1223,7 @@ function SendResponses(mutex_client: Client, T: Twit, origTweet: Twit.Twitter.St
               log.debug(`Releasing mutex ${key}...`);
 
               if (mutex_client) {
-                mutex_client.release(key, { id: id } as LMXClientUnlockOpts).then( (v: any /*LMUnlockSuccessData not exported... but it is*/) => {
+                mutex_client.release(key, { id: id }/* as LMXClientUnlockOpts */).then( (v /*LMUnlockSuccessData not exported... but it is*/) => {
                   log.debug(`Released mutex ${key}.`);
 
                   // Send the rest of the responses. When those are sent, then resolve
@@ -1424,7 +1425,7 @@ function GetRequestRecords(): Promise<Array<IRequestRecord>> {
       if (err) {
         handleError(err);
       } else {
-        request_records = result.Items;
+        request_records = result.Items as Array<IRequestRecord>;
       }
       resolve(request_records);
     });
@@ -1459,54 +1460,57 @@ function GetCitationRecords(): Promise<Array<ICitationRecord>> {
     //    we got back and do individual queries for UNPROCESSED citations for
     //    each request_id. This ensures we process all the citations for a given
     //    request together. This is required cause we tweet out summaries/totals.
-    docClient.query(params, async function(err, result) {
+    docClient.query(params, async (err: Error, result: QueryOutput) => {
       if (err) {
         handleError(err);
       } else {
         // 2. De-dupe the returned request_id's.
-        var requestIDs = {};
+        var requestIDs: { [key: string ]: number} = {};
 
         result.Items.forEach(function(item) {
-          requestIDs[item.request_id] = 1;
+          requestIDs[item.request_id as string] = 1;
         });
 
         // 3. Check if we retrieved all the unprocessed citations
         if (
-          result.hasOwnProperty("last_evaluated_key") &&
-          result.last_evaluated_key
+          result.hasOwnProperty("LastEvaluatedKey") &&
+          result.LastEvaluatedKey
         ) {
           // Paging!!!!
           // Fall back to making additional query for each request_id we have, looping
           // until we get MAX_RECORDS_BATCH records.
-          var requestIndex = 0;
+          var requestIndex: number = 0;
 
           while (
             citation_records.length < MAX_RECORDS_BATCH &&
             requestIndex < Object.keys(requestIDs).length
           ) {
-            var requestID = requestIDs[Object.keys(requestIDs[requestIndex])];
+            var requestID = requestIDs[requestIndex];
             requestIndex++;
 
             // 3a. Query for the citations for this request_id
             // Use the index which includes request_id.
             params.IndexName = "request_id-processing_status-index";
             params.KeyConditionExpression =
-              "#request_id = :rkey AND #processing_status = :pkey";
-            params.ExpressionAttributeNames["#request_id"] = "request_id";
-            params.ExpressionAttributeValues[":rkey"] = requestID;
+              `request_id = ${requestID} AND processing_status = 'UNPROCESSED'`;
             params.Limit = MAX_RECORDS_BATCH; // If there is a license with more citations than this... good enough
 
             // Note: We are assuming that no single request will result in > MAX_RECORDS_BATCH citations.
-            await docClient.query(params, function(err, result) {
+            //       I'm sure some gasshole will eventually prove us overly optimistic. 
+            await docClient.query(params, (err: Error, result: QueryOutput) => {
               if (err) {
                 handleError(err);
               } else {
-                citation_records.push(result.Items);
+                // TODO: There must be a type-safe way to do this...
+                let citation_records_batch: any = result.Items;
+                citation_records.concat(citation_records_batch as Array<ICitationRecord>);
               }
             });
           }
         } else {
-          citation_records = result.Items;
+          // TODO: There must be a type-safe way to do this...
+          let citation_records_batch: any = result.Items;
+          citation_records = citation_records_batch as Array<ICitationRecord>;
         }
 
         resolve(citation_records);
@@ -1518,7 +1522,7 @@ function GetCitationRecords(): Promise<Array<ICitationRecord>> {
 function GetReportItemRecords() {
   var docClient = new AWS.DynamoDB.DocumentClient();
 
-  var report_item_records = [];
+  var report_item_records: Array<IReportItemRecord> = [];
 
   // Query unprocessed report items
   var params = {
@@ -1548,7 +1552,7 @@ function GetReportItemRecords() {
         handleError(err);
       } else {
         // 2. De-dupe the returned request_id's.
-        var requestIDs = {};
+        var requestIDs: { [key: string ]: number} = {};
 
         result.Items.forEach(function(item) {
           requestIDs[item.request_id] = 1;
@@ -1556,8 +1560,8 @@ function GetReportItemRecords() {
 
         // 3. Check if we retrieved all the unprocessed report items
         if (
-          result.hasOwnProperty("last_evaluated_key") &&
-          result.last_evaluated_key
+          result.hasOwnProperty("LastEvaluatedKey") &&
+          result.LastEvaluatedKey
         ) {
           // Paging!!!!
           // Fall back to making additional query for each request_id we have, looping
@@ -1568,16 +1572,14 @@ function GetReportItemRecords() {
             report_item_records.length < MAX_RECORDS_BATCH &&
             requestIndex < Object.keys(requestIDs).length
           ) {
-            var requestID = requestIDs[Object.keys(requestIDs[requestIndex])];
+            var requestID = requestIDs[requestIndex];
             requestIndex++;
 
             // 3a. Query for the report items for this request_id
             // Use the index which includes request_id.
             params.IndexName = "request_id-processing_status-index";
             params.KeyConditionExpression =
-              "#request_id = :rkey AND #processing_status = :pkey";
-            params.ExpressionAttributeNames["#request_id"] = "request_id";
-            params.ExpressionAttributeValues[":rkey"] = requestID;
+              `request_id = ${requestID} AND processing_status = 'UNPROCESSED'`;
             params.Limit = MAX_RECORDS_BATCH;
 
             // Note: We are assuming that no single request will result in > MAX_RECORDS_BATCH report items.
@@ -1585,12 +1587,12 @@ function GetReportItemRecords() {
               if (err) {
                 handleError(err);
               } else {
-                report_item_records.push(result.Items);
+                report_item_records.concat(result.Items as Array<IReportItemRecord>);
               }
             });
           }
         } else {
-          report_item_records = result.Items;
+          report_item_records = result.Items as Array<IReportItemRecord>;
         }
 
         resolve(report_item_records);
@@ -1599,9 +1601,9 @@ function GetReportItemRecords() {
   });
 }
 
-function WriteReportItemRecords(docClient, request_id, citation, report_items) {
+function WriteReportItemRecords(docClient: AWS.DynamoDB.DocumentClient, request_id: string, citation: ICitationRecord, report_items: Array<string>) {
   var docClient = new AWS.DynamoDB.DocumentClient();
-  var truncated_report_items = [];
+  var truncated_report_items: Array<string> = [];
 
   // 1. Go through all report_items and split up any that will be > 280 characters when tweeted.
   // TODO: We should probably do this when processing the records, not before writing them.
@@ -1611,7 +1613,7 @@ function WriteReportItemRecords(docClient, request_id, citation, report_items) {
   var now = Date.now();
   // TTL is 10 years from now until the records are PROCESSED
   var ttl_expire = new Date(now).setFullYear(new Date(now).getFullYear() + 10);
-  var report_item_records = [];
+  var report_item_records: Array<object> = [];
   var record_num = 0;
 
   truncated_report_items.forEach(report_text => {
@@ -1645,7 +1647,7 @@ function WriteReportItemRecords(docClient, request_id, citation, report_items) {
 
 function getAccountID(T: Twit): Promise<number> {
   return new Promise( ( resolve, reject) => {
-    T.get("account/verify_credentials", {}, (err: Error, data: any, response: Response) => {
+    T.get("account/verify_credentials", {}, (err: Error, data: any, response: http.IncomingMessage) => {
       if (err) {
         handleError(err);
       }
@@ -1670,18 +1672,18 @@ function getAccountID(T: Twit): Promise<number> {
  * Note: elements in source_lines are not joined if < maxLen, only broken
  *       up if > maxLen
  **/
-function SplitLongLines(source_lines, maxLen) {
-  var truncated_lines = [];
+function SplitLongLines(source_lines: Array<string>, maxLen: number): Array<string> {
+  var truncated_lines: Array<string> = [];
 
-  var index = 0;
+  var index: number = 0;
   source_lines.forEach(source_line => {
     if (source_line.length > maxLen) {
       // break it up into lines to start with
-      var chopped_lines = source_line.split("\n");
-      var current_line = "";
-      var first_line = true;
+      var chopped_lines: Array<string> = source_line.split("\n");
+      var current_line: string = "";
+      var first_line: boolean = true;
 
-      chopped_lines.forEach(line => {
+      chopped_lines.forEach( (line: string) => {
         if (line.length > maxLen) {
           // OK we have a single line that is too long for a tweet
           if (current_line.length > 0) {
@@ -1691,7 +1693,7 @@ function SplitLongLines(source_lines, maxLen) {
           }
 
           // word break it into multiple items
-          var truncate_index = maxLen - 1;
+          var truncate_index: number = maxLen - 1;
 
           // Go back until we hit a whitespace characater
           while (truncate_index > 0 && !/\s/.test(line[truncate_index])) {
@@ -1707,7 +1709,7 @@ function SplitLongLines(source_lines, maxLen) {
 
           // The rest of the string may still be too long.
           // Call ourselves recursively to split it up.
-          var rest_truncated_lines = SplitLongLines(
+          var rest_truncated_lines: Array<string> = SplitLongLines(
             [line.substring(truncate_index + 1)],
             maxLen
           );
