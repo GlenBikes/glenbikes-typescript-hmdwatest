@@ -4,6 +4,8 @@ import {Citation} from 'glenbikes-typescript-test';
 export {StatesAndProvinces, formatPlate} from '../util/licensehelper';
 export {GetHowsMyDrivingId, DumpObject} from '../util/stringutils';
 
+export {uuidv1} from '../util/stringutils';
+
 export interface IRequestRecord {
   id: string;
   license: string;

@@ -2,7 +2,7 @@
 import '../src/string-ext';
 
 import * as uuid from 'uuid';
-const uuidv1 = uuid.v1;
+export const uuidv1 = uuid.v1;
 
 /**
  * Wrap this just so we can stub it in tests.

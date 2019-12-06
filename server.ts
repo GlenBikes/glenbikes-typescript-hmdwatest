@@ -778,7 +778,7 @@ app.all("/processreportitems", (request: Request, response: Response) => {
     });
 });
 
-function processNewTweets(T: Twit, docClient: AWS.DynamoDB.DocumentClient, bot_app_id: number): Promise<void> {
+export function processNewTweets(T: Twit, docClient: AWS.DynamoDB.DocumentClient, bot_app_id: number): Promise<void> {
   let maxTweetIdRead: string = "-1";
   
   // Collect promises from these operations so they can go in parallel
@@ -989,13 +989,13 @@ function processNewDMs() {
 function batchWriteWithExponentialBackoff(docClient: AWS.DynamoDB.DocumentClient, table:string, records: Array<object>): Promise<void> {
   return new Promise( (resolve, reject) => {
     var qdb = docClient ? Q(docClient) : Q();
-    qdb.set_drain( function() {
+    qdb.drain = function () {
       resolve();
-    });
+    };
     
-    qdb.set_error((err: Error, task: any) => {
+    qdb.error = function(err: Error, task: any) {
       reject(err);
-    });
+    };
 
     var startPos: number = 0;
     var endPos: number;
@@ -1018,7 +1018,7 @@ function batchWriteWithExponentialBackoff(docClient: AWS.DynamoDB.DocumentClient
   })
 }
 
-function chompTweet(tweet: Twit.Twitter.Status) {
+export function chompTweet(tweet: Twit.Twitter.Status) {
   // Extended tweet objects include the screen name of the tweeting user within the full_text,
   // as well as all replied-to screen names in the case of a reply.
   // Strip off those because if UserA tweets a license plate and references the bot and then
@@ -1652,7 +1652,7 @@ function getAccountID(T: Twit): Promise<number> {
  * Note: elements in source_lines are not joined if < maxLen, only broken
  *       up if > maxLen
  **/
-function SplitLongLines(source_lines: Array<string>, maxLen: number): Array<string> {
+export function SplitLongLines(source_lines: Array<string>, maxLen: number): Array<string> {
   var truncated_lines: Array<string> = [];
 
   var index: number = 0;

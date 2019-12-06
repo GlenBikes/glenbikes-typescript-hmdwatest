@@ -1,10 +1,10 @@
 var assert = require('assert');
-var server = require('../server');
+var server = require('../dist/server');
 
 describe('Line choppping', function() {
   describe('chop empty line', function() {
     it('should return an empty line', function() {
-      var result = server._splitLines([''], 10);
+      var result = server.SplitLongLines([''], 10);
       assert.equal(result.length, 1);
       assert.equal(result[0], '');
     });
@@ -21,7 +21,7 @@ describe('Line choppping', function() {
         "long."
       ];
       
-      var result = server._splitLines([test_string.join('')], 10);
+      var result = server.SplitLongLines([test_string.join('')], 10);
 
       assert.equal(result.length, test_string.length);
       for (var i = 0; i < result.length; i++) {
@@ -43,7 +43,7 @@ describe('Line choppping', function() {
         'smaller.'
       ];
 
-      var result = server._splitLines([test_string.join('')], 10);
+      var result = server.SplitLongLines([test_string.join('')], 10);
       
       assert.equal(result.length, test_string.length);
       for (var i = 0; i < result.length; i++) {
@@ -60,7 +60,7 @@ describe('Line choppping', function() {
         'with three lines.' // this line will get split
       ];
       
-      var result = server._splitLines([test_string.join('\n')], 10);
+      var result = server.SplitLongLines([test_string.join('\n')], 10);
       
       assert.equal(result.length, test_string.length + 2);
       assert.equal(result[0], test_string[0]);
@@ -110,7 +110,7 @@ describe('Line choppping', function() {
         '2019: 9'
       ];
       
-      var result = server._splitLines(test_string, 280);
+      var result = server.SplitLongLines(test_string, 280);
       
       assert.equal(result.length, 8);
     })
