@@ -9,8 +9,8 @@ dependencies:
   chokidar: 3.3.0
   dynamo-batchwrite-queue: 1.0.1
   express: 4.17.1
-  glenbikes-typescript-seattle: 0.1.27
-  glenbikes-typescript-test: 0.1.45
+  glenbikes-typescript-seattle: 0.1.43
+  glenbikes-typescript-test: 0.1.52
   gulp: 3.9.1
   gulp-clean: 0.4.0
   gulp-cli: 2.2.0
@@ -2082,7 +2082,7 @@ packages:
     dev: true
     resolution:
       integrity: sha1-QdBF84UaXqiPA/JMocYXgRRGS5s=
-  /glenbikes-typescript-seattle/0.1.27:
+  /glenbikes-typescript-seattle/0.1.43:
     dependencies:
       '@types/bluebird': 3.5.29
       '@types/jasmine': 3.5.0
@@ -2092,7 +2092,7 @@ packages:
       chokidar: 3.3.0
       dynamo-batchwrite-queue: 1.0.1
       express: 4.17.1
-      glenbikes-typescript-test: 0.1.45
+      glenbikes-typescript-test: 0.1.52
       gulp: 3.9.1
       gulp-clean: 0.4.0
       gulp-cli: 2.2.0
@@ -2114,8 +2114,8 @@ packages:
     engines:
       node: 10.x
     resolution:
-      integrity: sha512-GiAWTb/mhR2es6mNr3cWSETMb3apwc670kPepBwkzaWe0uZh7e0Gu4n74tZEZgVeCWaAz3dR2bcVAVL+sIguiw==
-  /glenbikes-typescript-test/0.1.45:
+      integrity: sha512-LFgFp9vXhsEZkGW+Uxr9qGOYXwi3INHb6edbaPQz0BTokF2p9siKBFQnLGNzfQ+TbO+cRYalYRKlFPkYtSTbIg==
+  /glenbikes-typescript-test/0.1.52:
     dependencies:
       '@types/body-parser': 1.17.1
       '@types/es6-shim': 0.31.39
@@ -2148,7 +2148,7 @@ packages:
     engines:
       node: 11.15.0
     resolution:
-      integrity: sha512-QbWf4o/9MIUe47y7HI/y+oEYqHAi2+X0rtbZA34TEb9s3uHTNfvv7DsIBwtw88Zn3SAsBuuoPDsLFQPrMEv80w==
+      integrity: sha512-CwI0APOOUp85hGZhwk93eVmxmy3FwuYs7WJkdUYBnq93cDTKnA0PamPpsK/QsrGCwZbiJ7ztbjd6JuBCU+830Q==
   /glob-parent/3.1.0:
     dependencies:
       is-glob: 3.1.0
@@ -5981,8 +5981,8 @@ specifiers:
   chokidar: ^3.3.0
   dynamo-batchwrite-queue: ^1.0.1
   express: ^4.14.0
-  glenbikes-typescript-seattle: ^0.1.27
-  glenbikes-typescript-test: ^0.1.45
+  glenbikes-typescript-seattle: ^0.1.43
+  glenbikes-typescript-test: ^0.1.52
   gulp: ^3.9.1
   gulp-clean: ^0.4.0
   gulp-cli: ^2.2.0

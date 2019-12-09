@@ -32,7 +32,7 @@ export interface IReportItemRecord {
 
 // TODO: Probalby shouldn't have this interface with all optional properties...
 export interface ICitationRecord extends ICitation {
-  Citation: number,
+  citation_id: number,
   request_id?: string;
   processing_status?: string;
   created?: number;
@@ -45,9 +45,11 @@ export interface ICitationRecord extends ICitation {
   tweet_user_screen_name?: string;
 }
 
-export class CitationRecord implements ICitationRecord {
+export class CitationRecord extends Citation implements ICitationRecord {
   [name: string]: number | string;
   constructor(citation: Citation) {
+    super(citation.citation_id, citation.license);
+    
     // If passed an existing instance, copy over the properties.
     if(arguments.length > 0) {
       for (var p in citation) {
@@ -60,7 +62,7 @@ export class CitationRecord implements ICitationRecord {
   
   id: string;
   license: string;
-  Citation: number;
+  citation_id: number;
   request_id: string;
   processing_status: string;
   created: number;
