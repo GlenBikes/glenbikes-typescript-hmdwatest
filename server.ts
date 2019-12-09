@@ -12,6 +12,7 @@ import {CitationIds} from 'glenbikes-typescript-test';
 import {IRegion} from 'glenbikes-typescript-test';
 import {ICitation} from 'glenbikes-typescript-test';
 import {CompareNumericStrings} from 'glenbikes-typescript-test';
+import {SplitLongLines} from 'glenbikes-typescript-test';
 
 // howsmydriving-seattle
 // TODO: Put the configuration of regions in .env
@@ -1100,16 +1101,14 @@ function parseTweet(text: string) {
 }
 
 function mungeObject(o: any, propertyOverrides: { [ key: string ]: any }): void {
-  console.log(`munging object: ${DumpObject(o)}.`);
+  log.debug(`munging object: ${DumpObject(o)}.`);
   for (var p in o) {
-    console.log(`Checking for property [${p}].`);
     if (o.hasOwnProperty(p)) {
       if (p in propertyOverrides) {
         // OK, we need to override this property if it is undefined, null or empty string
         var val = o[p];
         
         if (val == undefined || val == null || val == "") {
-          console.log(`Overriding property ${p} with ${propertyOverrides[p]}.`);
           o[p] = propertyOverrides[p];
         }
       }
@@ -1676,91 +1675,5 @@ function getAccountID(T: Twit): Promise<number> {
       resolve(data.id);
     });    
   });
-}
-
-/*
- * Split array of strings to ensure each string is <= maxLen
- *
- * Params:
- *   source_lines: array of strings (each one may be multi-line)
- *   maxLen:       maximum length for each element in source_lines
- * Returns:
- *   array of strings matching source_lines but with any elements longer
- *   than maxLen, broken up into multiple entries, breaking on in order:
- *   - newlines (trailing newlines on broken elements are removed)
- *   - word breaks
- *   - if neither above exist, then just split at maxLen characters
- *
- * Note: elements in source_lines are not joined if < maxLen, only broken
- *       up if > maxLen
- **/
-export function SplitLongLines(source_lines: Array<string>, maxLen: number): Array<string> {
-  var truncated_lines: Array<string> = [];
-
-  var index: number = 0;
-  source_lines.forEach(source_line => {
-    if (source_line.length > maxLen) {
-      // break it up into lines to start with
-      var chopped_lines: Array<string> = source_line.split("\n");
-      var current_line: string = "";
-      var first_line: boolean = true;
-
-      chopped_lines.forEach( (line: string) => {
-        if (line.length > maxLen) {
-          // OK we have a single line that is too long for a tweet
-          if (current_line.length > 0) {
-            truncated_lines.push(current_line);
-            current_line = "";
-            first_line = true;
-          }
-
-          // word break it into multiple items
-          var truncate_index: number = maxLen - 1;
-
-          // Go back until we hit a whitespace characater
-          while (truncate_index > 0 && !/\s/.test(line[truncate_index])) {
-            truncate_index--;
-          }
-
-          if (truncate_index == 0) {
-            // The line has no whitespace in it, just chop it in two
-            truncate_index = maxLen - 1;
-          }
-
-          truncated_lines.push(line.substring(0, truncate_index + 1));
-
-          // The rest of the string may still be too long.
-          // Call ourselves recursively to split it up.
-          var rest_truncated_lines: Array<string> = SplitLongLines(
-            [line.substring(truncate_index + 1)],
-            maxLen
-          );
-          truncated_lines = truncated_lines.concat(rest_truncated_lines);
-        } else {
-          if (current_line.length + line.length + 1 <= maxLen) {
-            if (!first_line) {
-              current_line += "\n";
-            }
-            current_line += line;
-            first_line = false;
-          } else {
-            truncated_lines.push(current_line);
-
-            // Start again
-            current_line = line;
-            first_line = true;
-          }
-        }
-      });
-
-      if (current_line.length > 0) {
-        truncated_lines.push(current_line);
-      }
-    } else {
-      truncated_lines.push(source_line);
-    }
-  });
-
-  return truncated_lines;
 }
 
