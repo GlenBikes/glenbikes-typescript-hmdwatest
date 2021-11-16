@@ -21,7 +21,7 @@
     "@types/twit": "^2.2.23",
     "@types/uuid": "^3.4.6",
     "async": "^3.1.0",
-    "aws-sdk": "^2.578.0",
+    "aws-sdk": "^2.814.0",
     "aws-sdk-mock": "^4.5.0",
     "chokidar": "^3.3.0",
     "dynamo-batchwrite-queue": "^1.0.1",
